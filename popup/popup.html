@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=300">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <h1 class="title">📸 Scroll Screenshot</h1>
+
+    <div class="actions">
+      <button class="btn btn-primary" data-mode="fullpage">
+        <span class="icon">📸</span> Full Page
+      </button>
+      <button class="btn btn-primary" data-mode="area">
+        <span class="icon">📐</span> Area Select
+      </button>
+      <button class="btn btn-primary" data-mode="element">
+        <span class="icon">🎯</span> Element Pick
+      </button>
+    </div>
+
+    <hr>
+
+    <div class="settings">
+      <h2 class="settings-title">⚙️ Settings</h2>
+
+      <div class="setting-row">
+        <label for="format">Format</label>
+        <select id="format">
+          <option value="png">PNG</option>
+          <option value="jpeg">JPEG</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <label for="defaultAction">Default Action</label>
+        <select id="defaultAction">
+          <option value="preview">Preview</option>
+          <option value="download">Download</option>
+          <option value="copy">Copy</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <label for="captureDelay">Capture Delay</label>
+        <select id="captureDelay">
+          <option value="50">50ms</option>
+          <option value="100" selected>100ms</option>
+          <option value="200">200ms</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
