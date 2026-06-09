@@ -1,0 +1,78 @@
+/* Overlay mask for area selection */
+.ss-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 2147483646;
+  cursor: crosshair;
+}
+
+/* Selection rectangle for area capture */
+.ss-selection {
+  position: fixed;
+  border: 2px solid #1a73e8;
+  background: rgba(26, 115, 232, 0.1);
+  z-index: 2147483646;
+  pointer-events: none;
+}
+
+/* Element highlight for element pick mode */
+.ss-element-highlight {
+  outline: 2px solid #1a73e8 !important;
+  outline-offset: -1px;
+  background-color: rgba(26, 115, 232, 0.08) !important;
+  cursor: pointer;
+}
+
+/* Action bar for area selection confirm/reject */
+.ss-action-bar {
+  position: fixed;
+  display: flex;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 2147483647;
+}
+
+.ss-action-bar button {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ss-action-btn-confirm {
+  background: #1a73e8;
+  color: #fff;
+}
+
+.ss-action-btn-cancel {
+  background: #f1f3f4;
+  color: #333;
+}
+
+/* Notification toast */
+.ss-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  background: #323232;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  z-index: 2147483647;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.ss-notification.visible {
+  opacity: 1;
+}
