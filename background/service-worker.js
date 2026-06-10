@@ -32,6 +32,12 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Keep-alive port for long captures
 let keepAlivePort = null;
+const captureSessions = new Map();
+const CAPTURE_VISIBLE_TAB_MIN_INTERVAL_MS = 1200;
+const CAPTURE_VISIBLE_TAB_MAX_RETRIES = 3;
+const CAPTURE_SESSION_TTL_MS = 10 * 60 * 1000;
+let lastVisibleTabCaptureAt = 0;
+let visibleTabCaptureQueue = Promise.resolve();
 
 chrome.runtime.onConnect.addListener((port) => {
   keepAlivePort = port;
@@ -63,10 +69,13 @@ async function handleMessage(message, sender) {
       return startCapture(message.tabId, message.mode);
 
     case 'captureFrame':
-      return captureFrame(windowId);
+      return captureFrame(windowId, message);
 
     case 'stitchAndFinish':
-      return stitchAndFinish(message.frames, message.fixedHeaderDataUrl, message.viewportHeight, message.dpr, message.domain, message.format);
+      return stitchAndFinish(message);
+
+    case 'discardCaptureSession':
+      return discardCaptureSession(message.sessionId);
 
     case 'singleCapture':
       return singleCapture(windowId, message.rect, message.dpr, message.format);
@@ -88,7 +97,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   };
   const mode = modeMap[info.menuItemId];
   if (mode && tab) {
-    injectAndStart(tab.id, mode);
+    injectAndStart(tab.id, mode).catch((err) => {
+      console.error('Scroll Screenshot context menu capture failed:', err);
+    });
   }
 });
 
@@ -103,11 +114,6 @@ async function startCapture(tabId, mode) {
 }
 
 async function injectAndStart(tabId, mode) {
-  // Inject image utilities first
-  await chrome.scripting.executeScript({
-    target: { tabId },
-    files: ['lib/image-utils.js']
-  });
   // Inject content script
   await chrome.scripting.executeScript({
     target: { tabId },
@@ -120,46 +126,143 @@ async function injectAndStart(tabId, mode) {
   });
   // Load settings and send start message to content script
   const settings = await getSettings();
-  chrome.tabs.sendMessage(tabId, {
+  return await chrome.tabs.sendMessage(tabId, {
     type: 'captureStart',
     mode,
     settings
   });
 }
 
-async function captureFrame(windowId) {
-  const dataUrl = await chrome.tabs.captureVisibleTab(windowId, {
-    format: 'png'
-  });
+async function captureFrame(windowId, message = {}) {
+  const dataUrl = await captureVisibleTabThrottled(windowId);
+
+  if (message.sessionId) {
+    const session = getCaptureSession(message.sessionId);
+    session.frames.push({
+      dataUrl,
+      scrollY: message.scrollY,
+      captureRect: message.captureRect
+    });
+    return { status: 'captured', frameCount: session.frames.length };
+  }
+
   return { dataUrl };
 }
 
-async function stitchAndFinish(frames, fixedHeaderDataUrl, viewportHeight, dpr, domain, format) {
+async function captureVisibleTabThrottled(windowId) {
+  const captureTask = visibleTabCaptureQueue.then(async () => {
+    const waitMs = Math.max(0, CAPTURE_VISIBLE_TAB_MIN_INTERVAL_MS - (Date.now() - lastVisibleTabCaptureAt));
+    if (waitMs > 0) {
+      await delay(waitMs);
+    }
+
+    return await captureVisibleTabWithRetry(windowId);
+  });
+
+  visibleTabCaptureQueue = captureTask.catch(() => {});
+  return await captureTask;
+}
+
+async function captureVisibleTabWithRetry(windowId) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= CAPTURE_VISIBLE_TAB_MAX_RETRIES; attempt++) {
+    try {
+      const dataUrl = await chrome.tabs.captureVisibleTab(windowId, {
+        format: 'png'
+      });
+      lastVisibleTabCaptureAt = Date.now();
+      return dataUrl;
+    } catch (err) {
+      lastError = err;
+      if (!isCaptureQuotaError(err) || attempt === CAPTURE_VISIBLE_TAB_MAX_RETRIES) {
+        throw err;
+      }
+
+      await delay(CAPTURE_VISIBLE_TAB_MIN_INTERVAL_MS * (attempt + 1));
+    }
+  }
+
+  throw lastError;
+}
+
+function isCaptureQuotaError(err) {
+  return err && /MAX_CAPTURE_VISIBLE_TAB_CALLS_PER_SECOND|quota/i.test(err.message || '');
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getCaptureSession(sessionId) {
+  let session = captureSessions.get(sessionId);
+  if (!session) {
+    session = {
+      frames: [],
+      timeoutId: setTimeout(() => {
+        captureSessions.delete(sessionId);
+      }, CAPTURE_SESSION_TTL_MS)
+    };
+    captureSessions.set(sessionId, session);
+  }
+  return session;
+}
+
+function discardCaptureSession(sessionId) {
+  if (!sessionId) {
+    return { status: 'discarded' };
+  }
+
+  const session = captureSessions.get(sessionId);
+  if (session && session.timeoutId) {
+    clearTimeout(session.timeoutId);
+  }
+  captureSessions.delete(sessionId);
+  return { status: 'discarded' };
+}
+
+async function stitchAndFinish(message) {
+  const {
+    sessionId,
+    fixedHeaderDataUrl,
+    viewportHeight,
+    totalHeight,
+    dpr,
+    format
+  } = message;
+  const session = sessionId ? captureSessions.get(sessionId) : null;
+  const frames = session ? session.frames : message.frames;
   const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';
 
-  if (frames.length === 1 && !fixedHeaderDataUrl) {
-    return { dataUrl: frames[0].dataUrl };
+  try {
+    if (!frames || frames.length === 0) {
+      throw new Error('No captured frames to stitch');
+    }
+
+    if (frames.length === 1 && !fixedHeaderDataUrl) {
+      return { dataUrl: frames[0].dataUrl };
+    }
+
+    const result = await ImageUtils.stitchFrames(frames, viewportHeight, 200, dpr, totalHeight);
+
+    // Composite fixed header at the top if provided
+    if (fixedHeaderDataUrl) {
+      const headerImg = await ImageUtils.loadImage(fixedHeaderDataUrl);
+      const ctx = result.canvas.getContext('2d');
+      // Only draw the fixed-element region (top 200 CSS pixels), not the entire viewport
+      const fixedRegionHeight = Math.min(200 * dpr, headerImg.height);
+      ctx.drawImage(headerImg, 0, 0, result.width, fixedRegionHeight, 0, 0, result.width, fixedRegionHeight);
+    }
+
+    const dataUrl = await ImageUtils.toDataUrl(result.canvas, mimeType);
+    return { dataUrl };
+  } finally {
+    discardCaptureSession(sessionId);
   }
-
-  const result = await ImageUtils.stitchFrames(frames, viewportHeight, 200, dpr);
-
-  // Composite fixed header at the top if provided
-  if (fixedHeaderDataUrl) {
-    const headerImg = await ImageUtils.loadImage(fixedHeaderDataUrl);
-    const ctx = result.canvas.getContext('2d');
-    // Only draw the fixed-element region (top 200 CSS pixels), not the entire viewport
-    const fixedRegionHeight = Math.min(200 * dpr, headerImg.height);
-    ctx.drawImage(headerImg, 0, 0, result.width, fixedRegionHeight, 0, 0, result.width, fixedRegionHeight);
-  }
-
-  const dataUrl = await ImageUtils.toDataUrl(result.canvas, mimeType);
-  return { dataUrl };
 }
 
 async function singleCapture(windowId, rect, dpr, format) {
-  const dataUrl = await chrome.tabs.captureVisibleTab(windowId, {
-    format: 'png'
-  });
+  const dataUrl = await captureVisibleTabThrottled(windowId);
 
   if (rect) {
     const mimeType = format === 'jpeg' ? 'image/jpeg' : 'image/png';

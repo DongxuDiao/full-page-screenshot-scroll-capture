@@ -14,9 +14,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   buttons.forEach((btn) => {
     btn.addEventListener('click', async () => {
       const mode = btn.dataset.mode;
-      await saveSettings();
-      await triggerCapture(mode);
-      window.close();
+      setStatus('');
+      setButtonsDisabled(true);
+
+      try {
+        await saveSettings();
+        const response = await triggerCapture(mode);
+        if (response && response.error) {
+          throw new Error(response.error);
+        }
+        window.close();
+      } catch (err) {
+        setStatus(err.message || 'Failed to start capture');
+        setButtonsDisabled(false);
+      }
     });
   });
 
@@ -28,13 +39,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function triggerCapture(mode) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab) return;
+  if (!tab) throw new Error('No active tab found');
 
-  chrome.runtime.sendMessage({
+  return await chrome.runtime.sendMessage({
     type: 'startCapture',
     tabId: tab.id,
     mode
   });
+}
+
+function setButtonsDisabled(disabled) {
+  document.querySelectorAll('.btn[data-mode]').forEach((btn) => {
+    btn.disabled = disabled;
+  });
+}
+
+function setStatus(message) {
+  document.getElementById('status').textContent = message;
 }
 
 async function saveSettings() {

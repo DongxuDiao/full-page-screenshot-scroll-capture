@@ -30,6 +30,18 @@ body {
   margin-bottom: 12px;
 }
 
+.status {
+  min-height: 16px;
+  margin-bottom: 10px;
+  color: #b3261e;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.status:empty {
+  display: none;
+}
+
 .btn {
   display: flex;
   align-items: center;
@@ -53,6 +65,11 @@ body {
 
 .btn-primary:active {
   background: #aecbfa;
+}
+
+.btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .icon {
