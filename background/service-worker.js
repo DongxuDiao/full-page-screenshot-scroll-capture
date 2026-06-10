@@ -1,5 +1,5 @@
 /**
- * Background service worker for Scroll Screenshot extension.
+ * Background service worker for Full Page Screenshot & Scroll Capture.
  * Handles context menu registration, message routing, and captureVisibleTab orchestration.
  * Uses sender.tab.id to identify tabs (content scripts don't know their own tabId).
  */
@@ -98,7 +98,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   const mode = modeMap[info.menuItemId];
   if (mode && tab) {
     injectAndStart(tab.id, mode).catch((err) => {
-      console.error('Scroll Screenshot context menu capture failed:', err);
+      console.error('Full Page Screenshot context menu capture failed:', err);
     });
   }
 });

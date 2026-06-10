@@ -1,5 +1,5 @@
 /**
- * Content script for Scroll Screenshot extension.
+ * Content script for Full Page Screenshot & Scroll Capture.
  * Handles: full-page scroll capture, area selection, element picking, preview panel.
  * Does NOT send tabId — service worker uses sender.tab.id.
  */

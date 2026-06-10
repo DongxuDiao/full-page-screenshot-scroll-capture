@@ -1,8 +1,8 @@
-# Scroll Screenshot
+# Full Page Screenshot & Scroll Capture
 
 English | [中文](#中文)
 
-A lightweight Chrome Extension for capturing scrolling screenshots, selected areas, and individual page elements. It runs locally in the browser, uses Manifest V3, and has no runtime dependencies.
+A lightweight Chrome extension for full-page screenshots, scrolling capture, selected areas, and individual page elements. It runs locally in the browser, uses Manifest V3, and has no runtime dependencies.
 
 ## Features
 
@@ -16,7 +16,7 @@ A lightweight Chrome Extension for capturing scrolling screenshots, selected are
 
 ## How It Works
 
-Scroll Screenshot is split into three main pieces:
+Full Page Screenshot & Scroll Capture is split into three main pieces:
 
 - `popup/`: the extension popup UI. It lets users choose capture mode, output format, default action, and capture delay.
 - `content/`: the page-side capture controller. It handles scrolling, area selection, element picking, preview UI, and user notifications.
@@ -42,7 +42,7 @@ For area and element screenshots, the content script computes the viewport-relat
 Create a zip file whose root contains `manifest.json` directly:
 
 ```bash
-zip -r scroll-screenshot.zip \
+zip -r full-page-screenshot-scroll-capture.zip \
   manifest.json background content lib popup icons README.md LICENSE \
   -x '*.DS_Store'
 ```
@@ -51,7 +51,7 @@ zip -r scroll-screenshot.zip \
 
 ### Capture From The Popup
 
-1. Click the Scroll Screenshot extension icon.
+1. Click the Full Page Screenshot & Scroll Capture extension icon.
 2. Choose one of the capture modes:
    - **Full Page**: captures the whole scrollable page or main scroll container.
    - **Area Select**: drag to select a rectangle, then click **Confirm**.
@@ -65,7 +65,7 @@ zip -r scroll-screenshot.zip \
 ### Capture From The Context Menu
 
 1. Right-click on a page.
-2. Choose a Scroll Screenshot action from the context menu.
+2. Choose a Full Page Screenshot & Scroll Capture action from the context menu.
 3. Follow the on-screen prompts if area or element selection is required.
 
 ## Permissions
@@ -107,7 +107,7 @@ done
 
 ## Privacy
 
-Scroll Screenshot processes screenshots locally in your browser. It does not collect analytics, does not send screenshots to remote servers, and does not sell or share user data.
+Full Page Screenshot & Scroll Capture processes screenshots locally in your browser. It does not collect analytics, does not send screenshots to remote servers, and does not sell or share user data.
 
 ## License
 
@@ -117,9 +117,9 @@ MIT
 
 ## 中文
 
-[English](#scroll-screenshot) | 中文
+[English](#full-page-screenshot--scroll-capture) | 中文
 
-Scroll Screenshot 是一个轻量级 Chrome 截图扩展，支持滚动长截图、区域截图和元素截图。它基于 Manifest V3 开发，无运行时依赖，截图和拼接过程都在本地浏览器中完成。
+Full Page Screenshot & Scroll Capture 是一个轻量级 Chrome 截图扩展，支持整页截图、滚动长截图、区域截图和元素截图。它基于 Manifest V3 开发，无运行时依赖，截图和拼接过程都在本地浏览器中完成。
 
 ## 功能特性
 
@@ -165,7 +165,7 @@ Scroll Screenshot 是一个轻量级 Chrome 截图扩展，支持滚动长截图
 打包时要确保 zip 根目录直接包含 `manifest.json`：
 
 ```bash
-zip -r scroll-screenshot.zip \
+zip -r full-page-screenshot-scroll-capture.zip \
   manifest.json background content lib popup icons README.md LICENSE \
   -x '*.DS_Store'
 ```
@@ -174,7 +174,7 @@ zip -r scroll-screenshot.zip \
 
 ### 通过弹窗截图
 
-1. 点击浏览器工具栏里的 Scroll Screenshot 图标。
+1. 点击浏览器工具栏里的 Full Page Screenshot & Scroll Capture 图标。
 2. 选择截图模式：
    - **Full Page**：截取整页或主要滚动容器。
    - **Area Select**：拖拽选择区域，然后点击 **Confirm**。
@@ -188,7 +188,7 @@ zip -r scroll-screenshot.zip \
 ### 通过右键菜单截图
 
 1. 在页面中右键点击。
-2. 选择 Scroll Screenshot 对应的截图动作。
+2. 选择 Full Page Screenshot & Scroll Capture 对应的截图动作。
 3. 如果选择区域截图或元素截图，根据页面提示继续操作。
 
 ## 权限说明
@@ -230,7 +230,7 @@ done
 
 ## 隐私说明
 
-Scroll Screenshot 在本地浏览器中处理截图。它不收集统计数据，不把截图上传到远程服务器，也不会出售或分享用户数据。
+Full Page Screenshot & Scroll Capture 在本地浏览器中处理截图。它不收集统计数据，不把截图上传到远程服务器，也不会出售或分享用户数据。
 
 ## 许可证
 

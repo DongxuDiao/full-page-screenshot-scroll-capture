@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Scroll Screenshot",
+  "name": "Full Page Screenshot & Scroll Capture",
   "version": "1.0.0",
-  "description": "Capture full-page scrolling screenshots with area and element selection",
+  "description": "Capture full-page screenshots, scrolling pages, selected areas, and page elements",
   "permissions": [
     "activeTab",
     "scripting",
