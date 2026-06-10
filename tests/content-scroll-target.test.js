@@ -55,7 +55,9 @@ function loadContentScriptWithBodyScrollPage() {
     'utf8'
   );
   const messages = [];
+  const captureNotificationStates = [];
   let messageListener = null;
+  let notification = null;
 
   const html = createElement({
     tagName: 'html',
@@ -88,7 +90,11 @@ function loadContentScriptWithBodyScrollPage() {
     rect: { left: 720, top: 300, right: 979, bottom: 529 }
   });
 
-  body.appendChild = () => {};
+  body.appendChild = (el) => {
+    if (el.className === 'ss-notification') {
+      notification = el;
+    }
+  };
 
   const document = {
     body,
@@ -102,8 +108,16 @@ function loadContentScriptWithBodyScrollPage() {
       if (id === 'ss-preview-host') return null;
       return null;
     },
-    querySelector: () => null,
+    querySelector: (selector) => {
+      if (selector === '.ss-notification') return notification;
+      return null;
+    },
     querySelectorAll: (selector) => {
+      if (selector === '.ss-notification') return notification ? [notification] : [];
+      if (selector === '#ss-preview-host' || selector === '.ss-action-bar' ||
+          selector === '.ss-overlay' || selector === '.ss-selection') {
+        return [];
+      }
       if (selector === 'body *') return [app, helper];
       if (selector === '*') return [app, helper];
       return [];
@@ -124,6 +138,9 @@ function loadContentScriptWithBodyScrollPage() {
       }),
       sendMessage: async (message) => {
         messages.push(message);
+        if (message.type === 'captureFrame') {
+          captureNotificationStates.push(notification ? notification.style.visibility : null);
+        }
         if (message.type === 'stitchAndFinish') {
           return { dataUrl: 'data:image/png;base64,result' };
         }
@@ -174,6 +191,7 @@ function loadContentScriptWithBodyScrollPage() {
     body,
     helper,
     messages,
+    captureNotificationStates,
     startCapture: () => {
       assert.equal(typeof messageListener, 'function');
       messageListener({
@@ -198,7 +216,7 @@ async function waitForMessage(messages, type) {
 }
 
 test('full-page capture uses body when body is the real scroll container', async () => {
-  const { body, helper, messages, startCapture } = loadContentScriptWithBodyScrollPage();
+  const { body, helper, messages, captureNotificationStates, startCapture } = loadContentScriptWithBodyScrollPage();
 
   startCapture();
   await waitForMessage(messages, 'stitchAndFinish');
@@ -206,6 +224,7 @@ test('full-page capture uses body when body is the real scroll container', async
   const frameMessages = messages.filter((message) => message.type === 'captureFrame' && message.sessionId);
   assert.ok(frameMessages.length > 2);
   assert.ok(frameMessages.every((message) => message.captureRect === null));
+  assert.ok(captureNotificationStates.every((visibility) => visibility === 'hidden'));
   assert.equal(body.scrollTop, 0);
   assert.equal(helper.scrollTop, 0);
 });

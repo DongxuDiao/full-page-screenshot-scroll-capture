@@ -137,7 +137,7 @@
         await delay(settings.captureDelay || 100);
 
         // Capture this frame (service worker uses sender.tab.id)
-        const response = await chrome.runtime.sendMessage({
+        const response = await sendCaptureMessage({
           type: 'captureFrame',
           sessionId,
           scrollY,
@@ -155,7 +155,7 @@
         restoreFixedElements();
         scrollTarget.setScrollTop(0);
         await delay(settings.captureDelay || 100);
-        const fixedFrameResponse = await chrome.runtime.sendMessage({
+        const fixedFrameResponse = await sendCaptureMessage({
           type: 'captureFrame'
         });
 
@@ -452,7 +452,7 @@
     };
 
     const dpr = window.devicePixelRatio;
-    const response = await chrome.runtime.sendMessage({
+    const response = await sendCaptureMessage({
       type: 'singleCapture',
       rect: vpRect,
       dpr,
@@ -719,6 +719,41 @@
   }
 
   // ===== Utilities =====
+
+  async function sendCaptureMessage(message) {
+    const restoreExtensionUi = hideExtensionUiForCapture();
+    await nextFrame();
+
+    try {
+      return await chrome.runtime.sendMessage(message);
+    } finally {
+      restoreExtensionUi();
+    }
+  }
+
+  function hideExtensionUiForCapture() {
+    const selectors = [
+      '.ss-notification',
+      '#ss-preview-host',
+      '.ss-action-bar',
+      '.ss-overlay',
+      '.ss-selection'
+    ];
+    const hiddenItems = [];
+
+    for (const selector of selectors) {
+      for (const el of document.querySelectorAll(selector)) {
+        hiddenItems.push({ el, prevVisibility: el.style.visibility });
+        el.style.visibility = 'hidden';
+      }
+    }
+
+    return () => {
+      for (const item of hiddenItems) {
+        item.el.style.visibility = item.prevVisibility;
+      }
+    };
+  }
 
   function showNotification(text, duration) {
     duration = duration || 3000;
