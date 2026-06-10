@@ -216,6 +216,13 @@
       return createWindowScrollTarget(scrollEl);
     }
 
+    const bodyOverflow = document.body
+      ? Math.max(0, document.body.scrollHeight - window.innerHeight)
+      : 0;
+    if (bodyOverflow > 1) {
+      return createBodyScrollTarget(document.body);
+    }
+
     let bestElement = null;
     let bestScore = 0;
     const elements = document.querySelectorAll('body *');
@@ -252,6 +259,18 @@
       viewportHeight: window.innerHeight,
       getScrollTop: () => window.scrollY,
       setScrollTop: (y) => window.scrollTo(0, y),
+      getCaptureRect: () => null
+    };
+  }
+
+  function createBodyScrollTarget(bodyEl) {
+    return {
+      type: 'window',
+      element: null,
+      totalHeight: bodyEl.scrollHeight,
+      viewportHeight: window.innerHeight,
+      getScrollTop: () => bodyEl.scrollTop,
+      setScrollTop: (y) => { bodyEl.scrollTop = y; },
       getCaptureRect: () => null
     };
   }
