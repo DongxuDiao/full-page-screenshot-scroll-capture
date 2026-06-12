@@ -4,6 +4,10 @@ English | [中文](#中文)
 
 A lightweight Chrome extension for full-page screenshots, scrolling capture, selected areas, and individual page elements. It runs locally in the browser, uses Manifest V3, and has no runtime dependencies.
 
+## Demo
+
+![Full Page Screenshot & Scroll Capture demo](assets/demo.gif)
+
 ## Features
 
 - Full-page scrolling screenshots with automatic scrolling and stitching
@@ -120,6 +124,10 @@ MIT
 [English](#full-page-screenshot--scroll-capture) | 中文
 
 Full Page Screenshot & Scroll Capture 是一个轻量级 Chrome 截图扩展，支持整页截图、滚动长截图、区域截图和元素截图。它基于 Manifest V3 开发，无运行时依赖，截图和拼接过程都在本地浏览器中完成。
+
+## 效果演示
+
+![Full Page Screenshot & Scroll Capture 效果演示](assets/demo.gif)
 
 ## 功能特性
 
